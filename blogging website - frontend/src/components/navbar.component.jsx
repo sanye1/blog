@@ -1,10 +1,12 @@
 import logo from "../imgs/logo.png"
-import { Link } from "react-router-dom";
+import { Link,Outlet} from "react-router-dom";
 import { useState } from "react";
 const Navbar = () => {
 
     const [searchBoxVisible, setSearchBoxVisible] = useState(false);
     return (
+        
+        <>  
         <nav className="navbar">
             <Link to='/' className="flex-none w-10">
                 <img src={logo} className="w-full" alt="logo" />
@@ -25,6 +27,8 @@ const Navbar = () => {
                 <Link to="/signup" className="btn-light py-2 hidden md:block">Sign up</Link>
             </div>
         </nav>
+        <Outlet />
+        </>
     )
 }
 export default Navbar;

@@ -1,9 +1,21 @@
+import { Route, Routes } from "react-router-dom";
 import Navbar from "./components/navbar.component";
 
 const App = () => {
     return (
+        <Routes>
 
-       <Navbar/>
+            <Route path="/" element={<Navbar />} >
+
+                <Route path="/signin" element={<h1>sing In</h1>} />
+                <Route path="/signup" element={<h1>sing Up</h1>} />
+                
+            </Route>
+
+
+        </Routes>
+
+
     )
 }
 
