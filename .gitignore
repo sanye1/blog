@@ -1,0 +1,36 @@
+*.log
+
+# 忽略所有 .txt 文件
+*.txt
+
+# 忽略所有 .pdf 文件
+*.pdf
+
+# 忽略所有 .jpg 文件
+*.jpg
+
+# 忽略所有 .png 文件
+*.png
+
+# 忽略所有 .git 文件夹
+.git/
+
+# 忽略所有 .idea 文件夹
+.idea/
+
+# 忽略所有 .vscode 文件夹
+.vscode/
+
+node_modules/
+
+# 忽略所有 dist 文件夹
+dist/
+
+# 忽略所有 build 文件夹
+build/
+
+# 忽略所有 coverage 文件夹
+coverage/
+
+# 忽略所有 .DS_Store 文件
+.DS_Store
