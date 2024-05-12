@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
 import InputBox from "../components/input.component";
 import googleIcon from '../imgs/google.png'
-
+import AnimationWrapper from "../common/page-animation";
 const UserAuthForm = ({ type }) => {
     return (
+        <AnimationWrapper keyValue={type}>
         <section className="flex justify-center">
             <form className="flex items-center flex-col justify-center h-cover w-[80%] max-w-[400px]">
                 <h1 className="text-4xl font-gelasio text-center mb-24 capitalize">{type === 'sign-in' ? 'Welcome Back' : 'Join Us today'}</h1>
@@ -56,6 +57,7 @@ const UserAuthForm = ({ type }) => {
                 }
             </form>
         </section>
+        </AnimationWrapper>
     )
 }
 export default UserAuthForm;
