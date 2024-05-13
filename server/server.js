@@ -3,9 +3,10 @@ import mongoose from 'mongoose';
 import 'dotenv/config'
 
 import bcrypt from 'bcrypt';
-
+import { nanoid } from 'nanoid';
 
 import User from './Schema/User.js'
+import jwt from 'jsonwebtoken';
 const app = express();
 
 
@@ -16,6 +17,27 @@ app.use(express.json())
 
 mongoose.connect(process.env.DB_LOCATION, { autoIndex:true })
 
+
+
+const formatDataToSend = (user)=>{
+    const access_token = jwt.sign({id: user._id}, process.env.SECRET_ACCESS_KEY, {expiresIn: '1h'})
+    return {
+        access_token,
+        profile_img:user.personal_info.profile_img,
+        fullname:user.personal_info.fullname,
+        username:user.personal_info.username,
+    }
+}
+
+
+const generateUsername = async (email)=>{
+    const  username = email.split('@')[0];
+    const isUsernameUnique = await User.exists({"personal_info.username": username});
+    if(isUsernameUnique){
+        return username + nanoid(3);
+    }
+    return username;
+}
 app.post('/signup', (req, res) => {
     const {fullname, email, password} = req.body;
     if(!fullname || !email || !password){
@@ -31,29 +53,60 @@ app.post('/signup', (req, res) => {
     if(!emailRegex.test(email)){
             return res.status(403).json({"error": 'Email is not valid'})
     }
-    bcrypt.hash(password, 10, (err, hash) => {
+    
+    bcrypt.hash(password, 10, async(err, hash) => {
         if(err){
             return res.status(500).json({"error": 'Internal server error'})
         }
-        const username = email.split('@')[0];
+        const username =await generateUsername(email)
         const user = new User({
             personal_info: {
                 fullname,
                 email,
                 password: hash,
-                fullname
+                username
             }
         })
-        user.save().then(() => {
-            return res.json({"message": 'User registered successfully'})
+        user.save().then((u) => {
+            return res.json(formatDataToSend(u))
         })
         .catch(err => {
+            if(err.code === 11000){
+                return res.status(500).json({"error": 'Email is already registered'})
+            }
             return res.status(500).json({"error": err.message})
         })
         // TODO: save the user to the database
         // res.json({"message": 'User registered successfully'})
     })
     // TODO: check if the email is already registered
+})
+
+app.post('/signin', (req, res) => {
+    const {email, password} = req.body;
+    if(!email || !password){
+        return res.status(403).json({"error": 'Please fill all the fields'})
+    }
+    User.findOne({"personal_info.email": email})
+    .then((user) => {
+        if(!user){
+            return res.json({status:'email not found'})
+        }
+        bcrypt.compare(password, user.personal_info.password, (err, result) => {
+            if(err){
+                return res.status(403).json({error:"Error occured while login please try again"})
+            }
+            if(!result){
+                return res.status(403).json({error:"Incorrect password"})
+            }else{
+                return res.json(formatDataToSend(user))
+            }
+        })
+        // return res.json({status:'got usr document'})
+    })
+    .catch(err => {
+        return res.status(500).json({"error": err.message})
+    })
 })
 
 const PORT = 3000;
