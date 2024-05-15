@@ -7,6 +7,10 @@ import { nanoid } from 'nanoid';
 
 import User from './Schema/User.js'
 import jwt from 'jsonwebtoken';
+import cors from 'cors';
+
+
+
 const app = express();
 
 
@@ -14,6 +18,9 @@ let emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/; // regex for e
 let passwordRegex = /^(?=.*\d)(?=.*[a-z])|(?=.*[A-Z]).{6,20}$/; // regex for password
 
 app.use(express.json())
+
+app.use(cors())
+
 
 mongoose.connect(process.env.DB_LOCATION, { autoIndex:true })
 
