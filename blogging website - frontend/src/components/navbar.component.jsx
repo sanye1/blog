@@ -1,9 +1,23 @@
 import logo from "../imgs/logo.png"
 import { Link,Outlet} from "react-router-dom";
-import { useState } from "react";
-const Navbar = () => {
+import { useContext, useState } from "react";
+import { UserContext } from "../App";
+import UserNavigation from "./user-navigation.component";
 
+const Navbar = () => {
+    const {userAuth,userAuth:{access_token,profile_img}} = useContext(UserContext);
+
+    const [userNavpanel, setUserNavpanel] = useState(false);
     const [searchBoxVisible, setSearchBoxVisible] = useState(false);
+
+    const handleUserNavpanel = () => {
+        setUserNavpanel(!userNavpanel);
+    }
+    const handleBlur = () => {
+        setTimeout(() => {
+            setUserNavpanel(false)
+        },200)
+    }
     return (
         
         <>  
@@ -23,8 +37,29 @@ const Navbar = () => {
                     <i className="fi fi-rr-file-edit"></i>
                     <p>write</p>
                 </Link>
+                {
+                access_token? 
+                    <>
+                        <Link to='/dasboard'>
+                            <button className="w-12 h-12 relative bg-grey hover:bg-black/10 rounded-full flex justify-center items-center">
+                                <i className="fi fi-rr-bell text-2xl mt-1"></i>
+                            </button>
+                        </Link>
+                        <div className="relative" onClick={handleUserNavpanel} onBlur={handleBlur}>
+                            <button className="w-12 h-12 mt-1">
+                                <img src={profile_img} className="rounded-full w-full h-full object-cover" alt="" />
+                            </button>
+                            {userNavpanel? <UserNavigation/> :''}
+                        </div>
+                    </>
+                :
+                <>
                 <Link to="/signin" className="btn-dark py-2">Sign in</Link>
                 <Link to="/signup" className="btn-light py-2 hidden md:block">Sign up</Link>
+                </>
+
+                }
+
             </div>
         </nav>
         <Outlet />
