@@ -7,6 +7,7 @@ import { toast, Toaster } from "react-hot-toast";
 import { storeInSession } from "../common/session";
 import { UserContext } from "../App";
 import { useContext } from "react";
+import { authWithGoogle } from "../common/firebase";
 
 const UserAuthForm = ({ type }) => {
 
@@ -34,6 +35,23 @@ const UserAuthForm = ({ type }) => {
         const requestRoute = type === 'sign-in' ? '/signin' : '/signup'
         userAuthThroughServer(requestRoute, formData)
     }
+
+    const handleGoogleAuth = (e) => {
+        e.preventDefault()
+        authWithGoogle()
+        .then(user=>{
+            let saverRoute = '/google-auth'
+            let formData = {
+                access_token: user.accessToken,
+            }
+            userAuthThroughServer(saverRoute, formData)
+        })
+        .catch((err)=>{
+            toast.error('trouble login through google')
+            return console.log(err)
+        })
+    }
+
     return (
         access_token ?
             <Navigate to='/' />
@@ -70,7 +88,7 @@ const UserAuthForm = ({ type }) => {
                             <p>or</p>
                             <hr className="w-1/2" />
                         </div>
-                        <button className="btn-dark flex items-center gap-4 justify-center w-[90%] center">
+                        <button onClick={handleGoogleAuth} className="btn-dark flex items-center gap-4 justify-center w-[90%] center">
                             <img src={googleIcon} alt="" className="w-5" />
                             continue with google
                         </button>

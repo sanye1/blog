@@ -9,10 +9,15 @@ import User from './Schema/User.js'
 import jwt from 'jsonwebtoken';
 import cors from 'cors';
 
-
-
+import admin from 'firebase-admin'
+import serviceAccountKey from './blog-marn-firebase-adminsdk-wr17r-c658e16714.json' assert {type: 'json'}
+import { getAuth } from 'firebase-admin/auth';
 const app = express();
 
+
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccountKey)
+})
 
 let emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/; // regex for email
 let passwordRegex = /^(?=.*\d)(?=.*[a-z])|(?=.*[A-Z]).{6,20}$/; // regex for password
@@ -91,29 +96,72 @@ app.post('/signup', (req, res) => {
 
 app.post('/signin', (req, res) => {
     const {email, password} = req.body;
-    if(!email || !password){
-        return res.status(403).json({"error": 'Please fill all the fields'})
-    }
+   
     User.findOne({"personal_info.email": email})
     .then((user) => {
         if(!user){
             return res.json({status:'email not found'})
         }
-        bcrypt.compare(password, user.personal_info.password, (err, result) => {
-            if(err){
-                return res.status(403).json({error:"Error occured while login please try again"})
-            }
-            if(!result){
-                return res.status(403).json({error:"Incorrect password"})
-            }else{
-                return res.json(formatDataToSend(user))
-            }
-        })
+        // 如果不是google 账号登录
+        if(!user.google_auth){
+            bcrypt.compare(password, user.personal_info.password, (err, result) => {
+                if(err){
+                    return res.status(403).json({error:"Error occured while login please try again"})
+                }
+                if(!result){
+                    return res.status(403).json({error:"Incorrect password"})
+                }else{
+                    return res.json(formatDataToSend(user))
+                }
+            })
+        }else{
+            return res.status(403).json({error:"Account was created using google please login with google"})
+        }
+      
         // return res.json({status:'got usr document'})
     })
     .catch(err => {
         return res.status(500).json({"error": err.message})
     })
+})
+
+app.post('/google-auth', (req, res) => {
+     let {access_token} = req.body;
+     getAuth().verifyIdToken(access_token)
+     .then(async(decodeUser)=>{
+        let {email,name,picture} = decodeUser
+        picture = picture.replace('s96-c','s384-c')
+        let user = await User.findOne({'personal_info.email':email}).select('personal_info.fullname personal_info.profile_img personal_info.username google_auth')
+        .then(u=>{
+            return u || null
+        }).catch(err=>{
+            return res.status(500).json({'error':err.message})
+        })
+        if(user){
+            if(!user.google_auth){
+                return res.status(403).json({'error':'Please login with your email and password'})
+            }
+        }else{
+            let username = await generateUsername(email)
+            let newUser = new User({
+                personal_info:{
+                    fullname:name,
+                    email,
+                    profile_img:picture,
+                    username
+                },
+                google_auth:true
+            })
+           user = await newUser.save().catch(err=>{
+               return res.status(500).json({'error':err.message})
+           })
+
+        }
+        return res.status(200).json(formatDataToSend(user))
+
+     }).catch(err=>{
+         return res.status(500).json({'error':'Failed to authenticate user. Try with some other google account.' })
+     })
 })
 
 const PORT = 3000;
